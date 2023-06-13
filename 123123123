@@ -1,0 +1,493 @@
+#include <string>
+#include <iostream>
+#include<algorithm>
+#include <iomanip>
+#include <fstream>
+
+using namespace std;
+#define MAX 30
+
+//定义班级具有的属性
+struct person {
+    int xuehao = 0;
+    string xingming;
+    int inputNumber = 0;
+    float kemu[6] = {0, 0, 0, 0, 0, 0};
+    float scores = 0;
+};
+struct classroom {
+    struct person Class[MAX];       //定义班级里面学生具有的属性
+    int sizeofbooks;
+    int numberofClass = 0;
+    int numberofkemu = 0;
+};
+
+bool compareByScore1(const person &student1, const person &student2) {
+    return student1.scores > student2.scores;
+}
+bool compareByScore2(const person &student1, const person &student2) {
+    return student1.scores < student2.scores;
+}
+bool compareByXuehao(const person &student1, const person &student2) {
+    return student1.xuehao < student2.xuehao;
+}
+bool compareByXingming(const person &student1, const person &student2) {
+    return student1.xingming < student2.xingming;
+}
+bool IsFileEmpty(const std::string &filename) {
+    std::ifstream file(filename);
+    return file.peek() == std::ifstream::traits_type::eof();
+}
+bool FileExists(const std::string &filename) {
+    std::ifstream file(filename);
+    return file.good();
+}
+void prepare(classroom *abs) {
+    cout << "请输入您要录入的学生个数" << endl;
+    cin >> abs->numberofClass;
+    cout << "您要输入多少个科目的成绩？（小于等于6个,满分为100）" << endl;
+    int n;
+    cin >> n;
+    while (n > 6) {
+        cout << "不可以输入那么多个科目，请重新输入" << endl;
+        cin >> n;
+    }
+    abs->numberofkemu = n;
+    system("cls");
+}
+bool IsStudentID(const std::string& data) {
+    // 判断字符串长度是否为8
+    if (data.length() != 8) {
+        return false;
+    }
+
+    // 检查字符串中的每个字符是否都是数字
+    for (char c : data) {
+        if (!isdigit(c)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+int FindEmptyStudentSlot(classroom *abs) {
+    for (int i = 0; i < abs->numberofClass; i++) {
+        if (abs->Class[i].xuehao == 0) {
+            // 学号为0表示该槽位为空
+            return i; // 返回空槽位的索引
+        }
+    }
+    return -1; // 没有找到空槽位，返回-1
+}
+void loadin(classroom *abs) {
+    string filename = "students.txt";
+
+    if (FileExists(filename)) {
+        if(!IsFileEmpty(filename)){
+            ifstream file(filename);
+            if (file.is_open()) {
+                string temp;
+
+                string s ;
+
+                if (getline(file, temp)) {
+                    abs->numberofClass = stoi(temp);
+                } else {
+                    cout << "无法读取学生人数" << endl;
+                    return;
+                }
+
+                // 读取科目数
+                if (getline(file, temp)) {
+                    abs->numberofkemu = stoi(temp);
+                } else {
+                    cout << "无法读取科目数" << endl;
+                    return;
+                }
+
+                file.close();
+                std::cout << "成功读取学生信息文件：" << filename << std::endl;
+                cout<<abs->numberofClass<<endl;
+                cout<<abs->numberofkemu<<endl;
+            }
+        }else prepare(abs);
+    }
+}
+void typein(classroom *abs) {
+    system("cls");
+    if (abs->sizeofbooks == abs->numberofClass) {
+        cout << "班级已满，无法添加" << endl;
+        system("pause");
+        system("cls");
+    } else {
+        int hao;
+        string ming;
+        int kemu;
+        for (int i = 0; i < abs->numberofClass; ++i) {
+            cout << "请按顺序输入学生" << i + 1 << "的学号、姓名、和" << abs->numberofkemu << "科科目成绩:" << endl;
+
+            cin >> hao;
+            cin >> ming;
+            abs->Class[abs->sizeofbooks].xuehao = hao;
+            abs->Class[abs->sizeofbooks].xingming = ming;
+            //输入学号姓名接下来就是3科的科目成绩
+
+            for (int j = 0; j < abs->numberofkemu; ++j) {
+                cin >> kemu;
+
+                abs->Class[abs->sizeofbooks].kemu[j] = kemu;
+                abs->Class[abs->sizeofbooks].scores += kemu;
+            }
+            cout << endl;
+            cout << "录入成功" << endl;
+            abs->sizeofbooks++;
+        }
+
+    }
+    system("pause");
+    system("cls");
+}
+void cal1(classroom *abs) {
+    system("cls");
+    for (int i = 0; i < abs->numberofkemu; i++) {
+        float sum = 0;
+        for (int j = 0; j < abs->numberofClass; j++) {
+            sum += abs->Class[j].kemu[i];
+        }
+        cout << "科目" << (i + 1) << "的总成绩为：" << sum << "   " << "平均分为：" << fixed << setprecision(1)
+             << sum / abs->sizeofbooks << endl;
+    }
+    system("pause");
+    system("cls");
+}
+void cal2(classroom *abs) {
+    system("cls");
+    for (int i = 0; i < abs->sizeofbooks; i++) {
+        cout << "学生" << abs->Class[i].xingming << "的总成绩为：" << abs->Class[i].scores << "   " << "平均分为："
+             << fixed << setprecision(1) << abs->Class[i].scores / abs->numberofkemu << endl;
+    }
+    system("pause");
+    system("cls");
+}
+void Sort1(classroom *abs) {
+    if (abs->sizeofbooks == 0) {
+        system("cls");
+        cout << "班级为空，请录入数据再试" << endl;
+        system("pause");
+        system("cls");
+    }else {
+        system("cls");
+        person stu[MAX];
+        for (int i = 0; i < abs->sizeofbooks; i++)stu[i] = abs->Class[i];
+        sort(stu, stu + abs->sizeofbooks, compareByScore1);
+        cout << "现在是依照学生成绩从大到小排序：" << endl;
+        for (int i = 0; i < abs->sizeofbooks; i++)cout << stu[i].xingming << "的总成绩为" << stu[i].scores << endl;
+        system("pause");
+        system("cls");
+    }
+}
+void Sort2(classroom *abs) {
+    if (abs->sizeofbooks == 0) {
+        system("cls");
+        cout << "班级为空，请录入数据再试" << endl;
+        system("pause");
+        system("cls");
+    }else {
+        system("cls");
+        person stu[MAX];
+        for (int i = 0; i < abs->sizeofbooks; i++)stu[i] = abs->Class[i];
+        sort(stu, stu + abs->sizeofbooks, compareByScore2);
+        cout << "现在是依照学生成绩从大到小排序：" << endl;
+        for (int i = 0; i < abs->sizeofbooks; i++) {
+            cout << stu[i].xingming << "的总成绩为" << stu[i].scores << endl;
+        }
+        system("pause");
+        system("cls");
+    }
+}
+void Sort3(classroom *abs) {
+    if (abs->sizeofbooks == 0) {
+        system("cls");
+        cout << "班级为空，请录入数据再试" << endl;
+        system("pause");
+        system("cls");
+    }else {
+        system("cls");
+        person stu[MAX];
+        for (int i = 0; i < abs->sizeofbooks; i++)stu[i] = abs->Class[i];
+        sort(stu, stu + abs->sizeofbooks, compareByXuehao);
+        cout << "现在是依照学生学号从小到大排序：" << endl;
+        for (int i = 0; i < abs->sizeofbooks; i++) {
+            cout << "姓名" << stu[i].xingming << "    " << "学号：" << stu[i].xuehao << "   " << endl;
+        }
+        system("pause");
+        system("cls");
+    }
+}
+void Sort4(classroom *abs) {
+    if (abs->sizeofbooks == 0) {
+        system("cls");
+        cout << "班级为空，请录入数据再试" << endl;
+        system("pause");
+        system("cls");
+    }
+    else {
+        system("cls");
+        person stu[MAX];
+        for (int i = 0; i < abs->sizeofbooks; i++)stu[i] = abs->Class[i];
+        sort(stu, stu + abs->sizeofbooks, compareByXingming);
+        cout << "现在是依照学生姓名字典顺序从小到大排序：" << endl;
+        for (int i = 0; i < abs->sizeofbooks; i++) {
+            cout << "姓名" << stu[i].xingming << "    " << "学号：" << stu[i].xuehao << "   " << endl;
+        }
+        system("pause");
+        system("cls");
+    }
+}
+void Sort5(classroom *abs) {
+    if (abs->sizeofbooks == 0) {
+        system("cls");
+        cout << "班级为空，请录入数据再试" << endl;
+        system("pause");
+        system("cls");
+    }
+    else {
+        system("cls");
+        person stu[MAX];
+        for (int i = 0; i < abs->sizeofbooks; i++)stu[i] = abs->Class[i];
+        cout << "请输入你要查询的学号（按0退出）" << endl;
+        int xuehao;
+        cin >> xuehao;
+        if (xuehao == 0) {
+            system("cls");
+            return;
+        }
+        while (xuehao > 30 || xuehao < 1) {
+            cout << "您输入的学号有误，请重新输入" << endl;
+            system("pause");
+            system("cls");
+            cout << "请输入你要查询的学号" << endl;
+            cin >> xuehao;
+        }
+        sort(stu, stu + abs->sizeofbooks, compareByScore1);
+        bool isexist = false;
+        int position;
+        for (int i = 0; i < abs->sizeofbooks; i++) {
+            if ((stu[i].xuehao = xuehao)) {
+                position = i;
+                isexist = true;
+                break;
+            }
+        }
+        if (!isexist)cout << "没有找到该学号的学生";
+        else {
+            cout << "以下是按学号查询学生排名及其考试成绩:" << endl;
+            cout << "学号：" << xuehao << "   " << "姓名:" << stu[position].xingming << "   " << "总成绩："
+                 << stu[position].scores << "   " << "排名:" << position + 1 << endl;
+            system("pause");
+            system("cls");
+        }
+    }
+}
+void Sort6(classroom *abs) {
+    if (abs->sizeofbooks == 0) {
+        cout << "班级为空，请录入数据再试" << endl;
+        system("pause");
+        system("cls");
+    }
+    system("cls");
+    person stu[MAX];
+    for (int i = 0; i < abs->sizeofbooks; i++)stu[i] = abs->Class[i];
+    cout << "请输入你要查询的姓名(按0退出）" << endl;
+    string Xingming;
+    cin >> Xingming;
+    if (Xingming == "0") {
+        system("cls");
+        return;
+    }
+    sort(stu, stu + abs->sizeofbooks, compareByScore1);
+    bool isexist = false;
+    int position;
+    for (int i = 0; i < abs->sizeofbooks; i++) {
+        if (stu[i].xingming == Xingming) {
+            position = i;
+            isexist = true;
+            break;
+        }
+    }
+    if (!isexist) {
+        cout << "没有找到该姓名的学生:<";
+        system("pause");
+        system("cls");
+    } else {
+        cout << "以下是按姓名查询学生排名及其考试成绩:" << endl;
+        cout << "学号：" << stu[position].xuehao << "   " << "姓名:" << stu[position].xingming << "   " << "总成绩："
+             << stu[position].scores << "   " << "排名:" << position + 1 << endl;
+        system("pause");
+        system("cls");
+    }
+}
+void ShowPersentage(classroom *abs) {
+    system("cls");
+    for (int i = 0; i < abs->numberofkemu; i++) {
+        float youxiu = 0, lianghao = 0, zhongdeng = 0, jige = 0, bujige = 0;
+        for (int j = 0; j < abs->sizeofbooks; j++) {
+            if (abs->Class[j].kemu[i] >= 90 && abs->Class[j].kemu[i] <= 100) youxiu++;
+            else if (abs->Class[j].kemu[i] >= 80 && abs->Class[j].kemu[i] <= 89) lianghao++;
+            else if (abs->Class[j].kemu[i] >= 70 && abs->Class[j].kemu[i] <= 79) zhongdeng++;
+            else if (abs->Class[j].kemu[i] >= 60 && abs->Class[j].kemu[i] <= 69) jige++;
+            else if (abs->Class[j].kemu[i] > 0 && abs->Class[j].kemu[i] <= 59) bujige++;
+        }
+        float count = youxiu + lianghao + zhongdeng + jige + bujige;
+        cout << "科目" << i + 1 << "共有" << count << "个人参加，具体如下：" << endl
+             << "优秀的人一共有" << fixed << setprecision(0) << youxiu << "个,占该课程总人数百分比为：" << fixed
+             << setprecision(1) << (youxiu / abs->sizeofbooks) * 100 << "%" << endl
+             << "良好的人一共有" << fixed << setprecision(0) << lianghao << "个,占该课程总人数百分比为：" << fixed
+             << setprecision(1) << (lianghao / abs->sizeofbooks) * 100 << "%" << endl
+             << "中等的人一共有" << fixed << setprecision(0) << zhongdeng << "个,占该课程总人数百分比为：" << fixed
+             << setprecision(1) << (zhongdeng / abs->sizeofbooks) * 100 << "%" << endl
+             << "及格的人一共有" << fixed << setprecision(0) << jige << "个,占该课程总人数百分比为：" << fixed
+             << setprecision(1) << (jige / abs->sizeofbooks) * 100 << "%" << endl
+             << "不及格的人一共有" << fixed << setprecision(0) << bujige << "个,占该课程总人数百分比为：" << fixed
+             << setprecision(1) << (bujige / abs->sizeofbooks) * 100 << "%" << endl;
+    }
+    system("pause");
+    system("cls");
+}
+void showall(classroom *abs) {
+    if (abs->sizeofbooks == 0) {
+        cout << "班级为空，请录入数据再试" << endl;
+        system("pause");
+        system("cls");
+    }
+    system("cls");
+    person stu[MAX];
+    for (int i = 0; i < abs->sizeofbooks; i++)stu[i] = abs->Class[i];
+    sort(stu, stu + abs->sizeofbooks, compareByXuehao);
+    for (int i = 0; i < abs->sizeofbooks; ++i) {
+        cout << "学号：" << stu[i].xuehao << "   " << "姓名：" << stu[i].xingming << "   " << "总分：" << stu[i].scores
+             << "   " << "平均分：" << stu[i].scores / abs->sizeofbooks;
+        cout << endl << "以下是该学生每个科目的平均分:" << endl;
+        for (int j = 0; j < abs->numberofkemu; ++j) {
+            cout << "科目" << (j + 1) << "平均分为：" << stu[i].kemu[j] << endl;
+        }
+        cout << endl;
+    }
+    system("pause");
+    system("cls");
+}
+void savein(classroom *abs) {
+    string filename = "students.txt";
+    ifstream file(filename);
+    if (!file.is_open()) {
+        // 文件不存在，生成新文件并录入数据
+        ofstream newFile(filename);
+
+        if (newFile.is_open()) {
+            for (int i = 0; i < abs->numberofClass; i++) {
+                newFile << abs->Class[i].xuehao << endl
+                        << abs->Class[i].xingming << endl;
+                for (int j = 0; j < abs->numberofkemu; ++j) {
+                    newFile << abs->Class[i].kemu[j] << endl;
+                }
+            }
+
+            newFile.close();
+            cout << "学生信息已保存到文件 " << filename << endl;
+        } else {
+            cout << "无法创建文件 " << filename << endl;
+        }
+    } else {
+        // 文件存在，打开并录入数据
+        file.close();
+
+        ofstream existingFile(filename, ios::app);
+
+        if (existingFile.is_open()) {
+            existingFile<<abs->numberofClass<<endl<<abs->numberofkemu<<endl;
+            for (int i = 0; i <abs-> numberofClass; i++) {
+                existingFile << abs->Class[i].xuehao << endl
+                             << abs->Class[i].xingming << endl;
+                for (int j = 0; j < abs->numberofkemu; ++j) {
+                    existingFile << abs->Class[i].kemu[j] << endl;
+                }
+            }
+            existingFile.close();
+            cout << "学生信息已追加到文件 " << filename << endl;
+        } else {
+            cout << "无法打开文件 " << filename << endl;
+        }
+    }
+}
+void showmenu() {
+    cout << "*****1.录入每个学生的学号、姓名和各科考试成绩成绩" << endl;
+    cout << "*****2.计算每门课程的总分和平均分" << endl;
+    cout << "*****3.计算每个学生的总分和平均分" << endl;
+    cout << "*****4.按每个学生的总分由高到低排出名次表" << endl;
+    cout << "*****5.按每个学生的总分由低到高排出名次表" << endl;
+    cout << "*****6.按学号由小到大排出成绩表" << endl;
+    cout << "*****7.按姓名的字典顺序排出成绩表" << endl;
+    cout << "*****8.按学号查询学生排名及其考试成绩" << endl;
+    cout << "*****9.按姓名查询学生排名及其考试成绩" << endl;
+    cout << "*****10.按优秀（90~100）、良好（80~89）、中等（70~79）、及格（60~69）、不及格（0~59）5个类别，对每门课程分别统计每个类别的人数以及所占的百分比；"
+         << endl;
+    cout << "*****11.输出每个学生的学号、姓名、各科考试成绩，以及个学生的总分和平均分" << endl;
+    cout << "*****0.退出程序并保存数据" << endl;
+    cout << "***************************************" << endl;
+    cout << "您要的功能是：";
+};
+int main() {
+    //定义，相当于结构体嵌套结构体的最大库，以后访问这个库都是用abs去访问
+    classroom abs;
+    //初始化当前班级人员
+    abs.sizeofbooks = 0;
+    loadin(&abs);
+    while (true) {
+        showmenu();
+        int select = 0;
+        cin >> select;
+        switch (select) {
+            case 1:
+                typein(&abs);
+                break;
+            case 2:
+                cal1(&abs);
+                break;
+            case 3:
+                cal2(&abs);
+                break;
+            case 4:
+                Sort1(&abs);
+                break;
+            case 5:
+                Sort2(&abs);
+                break;
+            case 6:
+                Sort3(&abs);
+                break;
+            case 7:
+                Sort4(&abs);
+                break;
+            case 8:
+                Sort5(&abs);
+                break;
+            case 9:
+                Sort6(&abs);
+                break;
+            case 10:
+                ShowPersentage(&abs);
+                break;
+            case 11:
+                showall(&abs);
+                break;
+            case 0:
+                savein(&abs);
+                return 0;
+            default:
+                cout << "请输入指定数字:>" << endl;
+                break;
+        }
+    }
+    system("pause");
+    return 0;
+}
